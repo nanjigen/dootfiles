@@ -1,0 +1,18 @@
+w_metadata control apps \
+title="Hello, Autohotkey"
+
+load_control()
+{
+#NoEnv  ; Recommended for performance and compatibility with futur§e AutoHotkey releases.
+; #Warn  ; Enable warnings to assist with detecting common errors.
+SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+SetTitleMatchMode,2
+;WinActivate, ahk_exe sm18.exe
+;WinWaitActive, ahk_exe sm18.exe
+
+WinActivate, ahk_exe Notepad.exe
+WinWaitActive, ahk_exe Notepad.exe
+Send, a
+"
+}

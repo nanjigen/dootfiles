@@ -1,0 +1,19 @@
+w_metadata class apps \
+title="Hello, Autohotkey"
+
+load_class()
+{
+w_ahk_do "
+j::
+;WinActivate, ahk_class TElWind
+;#IfWinActive, ahk_class, TElWind
+;WinActivate, ahk_class sm18.exe
+WinGetActiveTitle, Var
+;WinGetClass, Var, A
+;ControlGet, Var, A
+;MsgBox ahk_class %Var%
+MsgBox, The active window is "%Var%".
+;send, l
+return
+"
+}

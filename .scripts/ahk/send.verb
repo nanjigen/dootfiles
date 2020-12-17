@@ -1,0 +1,21 @@
+w_metadata send apps \
+title="Hello, Autohotkey"
+
+load_send()
+{
+w_ahk_do "
+;j::
+;WinActivate, ahk_class TElWind
+;#IfWinActive, ahk_class, TElWind
+;#IfWinActive, ahk_class, Notepad
+;ControlSend, Edit1, Test, WinTitle, Untitled - Notepad
+;ControlSend, Edit1, Test, Untitled - Notepad
+ControlSend, Edit1, Test, home
+;WinGetActiveTitle, Var
+;WinGetClass, Var, A
+;MsgBox ahk_class %Var%
+;MsgBox, The active window is "%Var%".
+;send, l
+;return
+"
+}

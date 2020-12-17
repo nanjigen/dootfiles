@@ -1,0 +1,20 @@
+# You can add comments to these files with #
+h	~/
+d	~/Documents
+dp	~/Documents/PDF
+n ~/Documents/.genbukan
+Tr ~/Documents/Translating
+D	~/Downloads
+m	~/Music
+pp	~/Pictures
+vv	~/Videos
+Tm ~/Templates
+s	~/.scripts
+cf	~/.config
+theme /usr/share/sddm/themes/sugar-dark
+pd ~/Phone/Documents
+pa ~/Phone/Documents/Audio
+pD ~/Phone/Download
+pP ~/Phone/Pictures
+pc ~/Phone/DCIM
+pvv ~/Phone/Videos

@@ -1,0 +1,20 @@
+# You can add comments to these files with #
+h	~/
+d	~/Documents
+U	~/Documents/Uni
+C	~/Documents/Personal
+D	~/Downloads
+m	~/Music
+o	~/org
+E	~/.emacs.d
+Ep	~/.emacs.d/private
+pp	~/Pictures
+PP	~/Programming
+Pa	~/Programming/Pythons/acdictools
+t	~/Documents/Translating
+T	~/Templates
+vv	~/Videos
+cf	~/.config
+sc	~/.scripts
+mn	/mnt
+e	/etc

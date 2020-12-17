@@ -1,0 +1,23 @@
+w_metadata activate apps \
+title="Hello, Autohotkey"
+
+load_activate()
+{
+w_ahk_do "
+;WinActivate, ahk_class TElWind
+;#IfWinActive, ahk_class, TElWind
+run, notepad.exe
+WinWait, Untitled - Notepad
+;ControlSend, lol, Test, ahk_class TElWind
+;ControlSend, Test2, {v}, ahk_class TElWind
+;#IfWinActive, ahk_class, TElWind
+;j::
+;WinActivate, ahk_exe sm18.exe
+;WinGetActiveTitle, Title
+;WinGetClass, Var, A
+;MsgBox ahk_class %Var%
+;MsgBox, The active window is "%Title%".
+send, l
+;return
+"
+}

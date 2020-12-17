@@ -1,0 +1,36 @@
+##!/bin/sh
+## This file is sourced by some DM and should not contain any desktop execution.
+
+# Testing for EXWM startup
+# (This is used for display manager startups)
+
+# export LANG="ja_JP.UTF-8"
+# export XMODIFIERS="@im=ibus"
+# export XMODIFIER="@im=ibus"
+# export GTK_IM_MODULE=ibus
+# export QT_IM_MODULE=ibus
+# export DefaultIMModule=ibus
+# ibus-daemon -drx
+
+export GTK_IM_MODULE='uim'
+export QT_IM_MODULE='uim'
+uim-xim &
+export XMODIFIERS='@im=uim'
+
+# exec emacs --daemon -f exwm-enable &
+# exec emacsclient -c &
+# sh -c "sleep 10 && emacsclient -c" &
+# xrdb -I$HOME ~/.Xresources &
+# ~/.scripts/panel |lemonbar  -B '#2f2f2f' -F '#dcdccc' -g 1920 -f "Monospace-10" &
+
+wal -R
+
+feh --bg-scale /usr/share/backgrounds/lain.jpg &
+picom &
+# exec emacsclient -a "" -c &
+syncthing &
+unclutter &
+redshift &
+# uim-toolbar-gtk3-systray
+
+setxkbmap -layout us -option "caps:swapescape"

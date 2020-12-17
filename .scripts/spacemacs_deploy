@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# yes | sudo pacman -S emacs
+# yay -S emacs-git
+# yay -S emacs-exwm-git
+
+# The following is from
+# https://github.com/smile13241324/spacemacs-InstallerAndConfig/blob/master/spacemacsAutoInstall_manjaro.sh
+spacemacsInstallationDir="${HOME}/.emacs.d"
+[[ ! -d "${spacemacsInstallationDir}" ]] && git clone https://github.com/syl20bnr/spacemacs "${spacemacsInstallationDir}"
+cd "${spacemacsInstallationDir}" || exit
+git checkout origin/develop --track
+git checkout develop
+git pull
+cd ..
+
+xfconf-query -c xfce4-session -p /sessions/Failsafe/Client0_Command -t string -sa emacsclient -t string -sa -c
+
+emacs
+# cd "${DIR}" || exit

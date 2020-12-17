@@ -1,0 +1,146 @@
+# Ignore all
+*
+
+# Now add dotfiles:
+## P.S. Someday add all of this by using the shortcuts script
+
+!/.gitignore
+!/README.md
+!/.key_files
+!/.key_directories
+!/.shortcuts
+!/.bashrc
+!/.bash_profile
+!/.zshrc
+!/.vimrc
+!/.xinitrc
+!/.xprofile
+!/.Xdefaults
+!/.Xresources
+!/.Xclients
+!/.doom.d
+!/.doom.d/*
+/.doom.d/bookmarks
+/.doom.d/.org-id-locations
+!/.doom.d/modules
+!/.doom.d/modules/*
+!/.doom.d/modules/desktop/*
+!/.doom.d/modules/desktop/exwm/*
+!/.doom.d/modules/lang/*
+!/.doom.d/modules/lang/org-private/*
+!/.spacemacs
+!/.spacemacs.d
+!/.spacemacs.d/*
+/.spacemacs.d/bookmarks
+# !/.spacemacs.d/backup
+# !/.spacemacs.d/backup/*
+# !/.spacemacs.d/backup/*/*
+!/.spacemacs.d/layers
+!/.spacemacs.d/layers/*
+!/.spacemacs.d/layers/rogue/*
+!/.spacemacs.d/layers/rogue/local/*
+!/.spacemacs.d/layers/rogue/local/*/*
+!/.spacemacs.d/layers/exwm/*
+!/.spacemacs.d/layers/exwm/*/*
+/.spacemacs.d/.recentf
+/.spacemacs.d/layers/google-calendar
+/.spacemacs.d/.spacemacs.env
+!/.examples/*
+
+!/.emacs.d/
+/.emacs.d/*
+!/.emacs.d/private/
+/.emacs.d/private/*
+!/.emacs.d/private/*/*
+
+!/.config
+/.config/*
+
+/.config/syncthing
+
+/.config/xfce4/
+/.config/xfce4/*
+# !/.config/xfce4/*
+# !/.config/xfce4/desktop/*
+# !/.config/xfce4/panel/*
+# !/.config/xfce4/xfconf/*
+# !/.config/xfce4/xfconf/xfce-perchannel-xml/*
+# !/.config/xfce4/terminal/*
+!/.config/autostart/
+!/.config/autostart/*
+
+# !/etc/xdg/xfce4/*
+
+!/.config/i3/
+!/.config/i3/config
+
+!/.config/i3blocks/
+!/.config/i3blocks/config
+
+!/.config/ranger/
+!/.config/ranger/*
+# !/.config/ranger/rc
+
+# !/.config/polybar/
+# !/.config/polybar/config
+
+!/.config/borgmatic/
+!/.config/borgmatic/*
+
+!/.config/qutebrowser/
+!/.config/qutebrowser/*
+
+!/.config/compton.conf
+!/.config/compton.conf/*
+
+!/.mozilla
+/.mozilla/*
+!/.mozilla/firefox
+!/.mozilla/firefox/*
+!/.mozilla/firefox/larbs.default
+!/.mozilla/firefox/larbs.default/*
+!/.mozilla/firefox/larbs.default/user.js
+!/.mozilla/firefox/larbs.default/*/*
+!/.mozilla/firefox/larbs.default/chrome
+!/.mozilla/firefox/larbs.default/chrome/*
+
+!/.config/tridactyl
+!/.config/tridactyl/*
+!/.config/tridactyl/themes/*
+
+!/.Xdefaults
+
+!/.themes
+!/.themes/*
+!/.themes/Ant-Dracula-master/*
+!/.themes/Ant-Dracula-master/*/*
+# !/.themes/*/*
+
+!/.scripts
+/.scripts/*
+/.scripts/DARBS
+!/.scripts/*
+/.scripts/*/*
+!/.scripts/*/*
+/.scripts/DARBS
+
+!/.local
+/.local/*
+!/.local/share
+/.local/share/*
+!/.local/share/
+/.local/share/applications/*
+!/.local/share/applications/emacsclient.desktop
+!/.local/share/xfce4
+!/.local/share/xfce4/*
+!/.local/share/xfce4/terminal/
+!/.local/share/xfce4/terminal/*
+!/.local/share/xfce4/terminal/colorschemes
+!~/.local/share/xfce4/terminal/colorschemes/*
+
+
+!/bin
+/bin/*
+!/bin/em
+!/bin/emc
+!/bin/emw

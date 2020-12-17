@@ -1,0 +1,28 @@
+w_metadata getpath apps\
+title="Hello, Autohotkey"
+
+load_getpath()
+{
+w_ahk_do "
+;#NoEnv  ; Recommended for performance and compatibility with futur§e AutoHotkey releases.
+; #Warn  ; Enable warnings to assist with detecting common errors.
+;SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+;SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+SetTitleMatchMode,2
+;WinActivate, ahk_exe sm18.exe
+;WinWaitActive, ahk_exe sm18.exe
+;run, notepad.exe
+;WinWait, Untitled - Notepad
+WinActivate, WinTitle home
+;WinWaitActive, WinTitle Untitled - Notepad
+
+;WinGetActiveTitle, Var
+;MsgBox, The active window is "%Var%".
+send, +{F10}
+sleep,5
+send, f
+sleep,5
+send, c
+;send, ^a
+"
+}

@@ -1,0 +1,5 @@
+config.source('shortcuts.py')
+config.source('shortcuts.py')
+config.source('shortcuts.py')
+config.source('shortcuts.py')
+config.source('shortcuts.py')

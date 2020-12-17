@@ -1,0 +1,9 @@
+w_metadata hotstring apps \
+title="Hello, Autohotkey"
+
+load_hotstring()
+{
+w_ahk_do "
+:*:get::get it boi
+"
+}

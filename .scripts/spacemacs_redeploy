@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# yes | yay -Rs migemo-git cask emacs-pdf-tools-git emacs-exwm-git
+# yes | yay -Rs emacs-git
+# yes | sudo pacman -Rs cask emacs
+# yes | sudo rm -rf ~/.emacs.d
+#
+# yes | sudo pacman -S emacs
+# yes | yay -S migemo-git
+
+
+
+yay -Rs migemo-git emacs-pdf-tools-git --noconfirm
+# yay -Rs emacs-git --noconfirm
+sudo pacman -Rs cask emacs --noconfirm
+yes | sudo rm -rf ~/.emacs.d
+
+sudo pacman -S emacs --noconfirm
+yay -S migemo-git --noconfirm
+# yay -S emacs-git
+
+# Use the following when compiling from source
+# sudo rm -rf ~/.config/emacs
+# mkdir ${HOME}/.emacs.d
+
+# The following is from
+# https://github.com/smile13241324/spacemacs-InstallerAndConfig/blob/master/spacemacsAutoInstall_manjaro.sh
+spacemacsInstallationDir="${HOME}/.emacs.d"
+[[ ! -d "${spacemacsInstallationDir}" ]] && git clone https://github.com/syl20bnr/spacemacs "${spacemacsInstallationDir}"
+cd "${spacemacsInstallationDir}" || exit
+git checkout origin/develop --track
+git checkout develop
+git pull
+cd ..
+
+yay -S emacs-pdf-tools-git --noconfirm
+# yay -S emacs-exwm-git
+
+# pacman -S migemo-git
+
+emacs -nw --insecure
+# cd "${DIR}" || exit

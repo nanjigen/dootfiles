@@ -1,0 +1,485 @@
+;;; desktop/exwm/config.el -*- lexical-binding: t; -*-
+
+;; (load! +funcs)
+;; (load! +settings)
+
+(defvar exwm-terminal-command "st"
+  "Terminal command to run.")
+
+(defvar exwm-locking-command "lock"
+  "Command to run when locking session")
+
+(defvar exwm-install-logind-lock-handler nil
+  "If this is non-nil and `exwm-locking-command' is set, register a D-BUS handler on the session lock signal.")
+
+(defvar exwm-hide-tiling-modeline nil
+  "Whether to hide modeline.")
+
+(defvar exwm-buffer-name-prefix "X:"
+  "A prefix to append to each buffer managed by exwm")
+
+;; (defvar exwm-enable-systray nil
+;;   "Whether to enable EXWM's bundled system tray implementation.")
+
+(defvar exwm-workspace-switch-wrap t
+  "Whether `exwm/workspace-next' and `exwm/workspace-prev' should wrap.")
+
+;; (use-package! xelb)
+(use-package! exwm
+;;  :commands (exwm-init)
+  :init
+
+  (setq exwm-workspace-number 6)
+    (when exwm-hide-tiling-modeline
+        (add-hook 'exwm-mode-hook #'hidden-mode-line-mode))
+    (setq exwm-input-line-mode-passthrough t)
+
+    ;; make sure that displaying transient states gets the keyboard input.
+    ;; Borrowed from: https://github.com/abo-abo/hydra/issues/232
+    (define-advice hydra-set-transient-map (:around (fun keymap on-exit &optional foreign-keys) exwm-passthrough)
+      (setq exwm-input-line-mode-passthrough t)
+      (let ((on-exit (lexical-let ((on-exit on-exit))
+                       (lambda ()
+                         (setq exwm-input-line-mode-passthrough nil)
+                         (when on-exit (funcall on-exit))))))
+        (funcall fun keymap on-exit foreign-keys)))
+
+  :config
+
+(defun jethro/exwm-rename-buffer-to-title () (exwm-workspace-rename-buffer (format "%s - %s" exwm-class-name exwm-title)))
+(add-hook 'exwm-update-title-hook 'jethro/exwm-rename-buffer-to-title)
+(add-hook 'exwm-update-class-hook
+          (defun my-exwm-update-class-hook ()
+            (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+                        (string= "gimp" exwm-instance-name)
+                        (string= "Firefox" exwm-class-name))
+              (exwm-workspace-rename-buffer exwm-class-name))))
+(add-hook 'exwm-update-title-hook
+          (defun my-exwm-update-title-hook ()
+            (cond ((or (not exwm-instance-name)
+                       (string-prefix-p "sun-awt-X11-" exwm-instance-name)
+                       (string= "gimp" exwm-instance-name)
+                       (string= "Firefox" exwm-class-name))
+                   (exwm-workspace-rename-buffer exwm-title)))))
+
+    (eval-after-load 'persp-mode
+      (advice-add 'persp-init-new-frame :before-until 'exwm//persp-mode-inhibit-p))
+
+    ;; kick all exwm buffers into insert mode per default
+    (add-hook 'exwm-manage-finish-hook 'exwm/enter-insert-state)
+
+
+(setq exwm-workspace-show-all-buffers t
+      exwm-layout-show-all-buffers t)
+
+(push ?\s-  exwm-input-prefix-keys)
+(push ?\M-  exwm-input-prefix-keys)
+
+(defun jethro/launch (command)
+  (interactive (list (read-shell-command "$ ")))
+  (start-process-shell-command command nil command))
+
+(defun jethro/screen-to-clipboard ()
+  (interactive)
+  (shell-command
+   (concat "bash -c 'FILENAME=$(date +'%Y-%m-%d-%H:%M:%S').png && maim -s $FILENAME"
+           " && xclip $FILENAME -selection clipboard "
+           "-t image/png &> /dev/null && rm $FILENAME'"))
+  (message "Added to clipboard."))
+
+(defun jethro/switch-to-last-buffer ()
+  "Switch to last open buffer in current window."
+  (interactive)
+  (switch-to-buffer (other-buffer (current-buffer) 1)))
+
+;; (exwm-input-set-key (kbd "s-SPC") #'jethro/launch)
+;; (exwm-input-set-key (kbd "s-p") #'password-store-copy)
+;; (exwm-input-set-key (kbd "C-x t") #'vterm)
+;; (exwm-input-set-key (kbd "s-t a") #'jethro/switch-to-agenda)
+;; (exwm-input-set-key (kbd "s-t m") #'notmuch)
+;; (exwm-input-set-key (kbd "s-c") #'jethro/org-inbox-capture)
+;; (exwm-input-set-key (kbd "s-f") #'counsel-find-file)
+;; (exwm-input-set-key (kbd "s-F") #'counsel-locate)
+;; (exwm-input-set-key (kbd "s-<tab>") #'jethro/switch-to-last-buffer)
+;; (exwm-input-set-key (kbd "<print>") #'jethro/screen-to-clipboard)
+
+    ;; Quick swtiching between workspaces
+    (defvar exwm-toggle-workspace 0
+      "Previously selected workspace. Used with `exwm/jump-to-last-exwm'.")
+
+    (defadvice exwm-workspace-switch (before save-toggle-workspace activate)
+      (setq exwm-toggle-workspace exwm-workspace-current-index))
+
+;; `exwm-input-set-key' sets global key bindings, independent of char mode, line mode, and line mode passthru
+
+    ;; + We always need a way to get to normal state if we are in insert state.
+    (exwm-input-set-key (kbd "s-<escape>") 'exwm/escape)
+
+    (exwm-input-set-key (kbd "<s-tab>") #'exwm/jump-to-last-exwm)
+
+;; + Set shortcuts to switch to a certain workspace.
+(mapcar (lambda (i)
+          (exwm-input-set-key (kbd (format "s-%d" i))
+                              `(lambda ()
+                                 (interactive)
+                                 (exwm-workspace-switch-create ,i))))
+        (number-sequence 0 9))
+
+ ;; in normal state/line mode, use the familiar i key to switch to input state
+  ;;  (evil-define-key 'normal exwm-mode-map (kbd "i") 'exwm-input-release-keyboard)
+    ;; (evil-define-key 'normal exwm-mode-map
+		     ;;(kbd "i") #'exwm/enter-insert-state)
+    (map! :map exwm-mode-map
+          :n "i" #'exwm-input-release-keyboard)
+    ;; (map! :map exwm-mode-map
+    ;;       :n "i" #'exwm/enter-insert-state)
+    ;; (dolist (k '("<down-mouse-1>" "<down-mouse-2>" "<down-mouse-3>"))
+    ;;   (evil-define-key 'normal exwm-mode-map (kbd k) 'exwm/enter-insert-state))
+    ;; (map! :map (exwm-mode-map
+    ;;       :n k 'exwm/enter-insert-state))
+    ;; "<down-mouse-1>"
+    ;; "<down-mouse-2>"
+    ;; "<down-mouse-3>"))
+    ;; (dolist (k '
+
+;; (evil-define 'normal exwm-mode-map (kbd "i") 'exwm-input-release-keyboard)
+;; (map! :map exwm-mode-map
+;;       :n "i" #'exwm/enter-insert-state)
+;; (push ?\i  exwm-input-prefix-keys)
+;; (push ?\  exwm-input-prefix-keys)
+
+    ;; Define super-space as default leader key.
+    (exwm-input-set-key (kbd "s-SPC") doom-leader-map)
+
+;; EXWM does not bypass exwm-mode-map keybindings in line-mode, so the
+    ;; default bindings are still mapped to C-c.  We remap that to C-s-c.
+
+    (define-key exwm-mode-map (kbd "C-s-c") (lookup-key exwm-mode-map (kbd "C-c")))
+    (define-key exwm-mode-map (kbd "C-c") nil)
+
+    ;; User s-q to close buffers
+    (exwm-input-set-key (kbd "s-q") 'kill-this-buffer)
+
+    ;; Don't override any keybindings in line-mode
+    (setq exwm-input-prefix-keys '())
+
+;; (add-hook 'exwm-manage-finish-hook
+;;         (lambda ()
+;;           (when (and exwm-class-name
+;;                      (string= exwm-class-name "URxvt"))
+;;             (exwm-input-set-local-simulation-keys '(([?\C-c ?\C-c] . ?\C-c))))))
+
+(setq exwm-input-simulation-keys
+      '(
+        ;; movement
+        ([?\C-b] . [left])
+        ([?\M-b] . [C-left])
+        ([?\C-f] . [right])
+        ([?\M-f] . [C-right])
+        ([?\C-p] . [up])
+        ([?\C-n] . [down])
+        ([?\C-a] . [home])
+        ([?\C-e] . [end])
+        ([?\M-v] . [prior])
+        ([?\C-v] . [next])
+        ([?\C-d] . [delete])
+        ([?\C-k] . [S-end delete])
+        ;; copy/paste.
+        ([?\M-w] . [?\C-c])
+        ([?\C-y] . [?\C-v])
+        ;; search
+        ([?\C-s] . [?\C-f])))
+
+    ;; Functions to start processes
+    (defun exwm-launcher (command)
+      "Asynchronously run a shell command with no associated buffer"
+      (interactive (list (read-shell-command "$ ")))
+      (start-process command nil default-shell "-c" command))
+
+    ;; default shell for ansi-term
+    (defvar default-shell "/bin/bash")
+    (defadvice ansi-term (before force-bash)
+      (interactive (list default-shell)))
+    (ad-activate 'ansi-term)
+
+    (defun launch-browser ()
+      (interactive)
+      (exwm-launcher "firefox"))
+
+    (defun logout-menu ()
+      "Locking the screen with built xfce4 lockscreen"
+      (interactive)
+      (exwm-launcher "xfce4-session-logout"))
+
+    (defun launch-ranger ()
+      "Launch Ranger with st and optionally pass it a folder or bookmark"
+      (interactive)
+      (exwm-launcher "st -e ranger"))
+
+    ;; Basic Bindings
+    ;; (exwm-input-set-key (kbd "s-DEL") #'reboot)
+    (exwm-input-set-key (kbd "s-`") #'helm-unicode)
+    (exwm-input-set-key (kbd "s-p") #'hide-panel)
+    ;; (exwm-input-set-key (kbd "s-i") #'proced)
+    (exwm-input-set-key (kbd "s-n") #'org-journal-new-entry)
+    (exwm-input-set-key (kbd "s-N") #'elfeed)
+    (exwm-input-set-key (kbd "s-W") #'nmtui)
+    ;; (exwm-input-set-key (kbd "s-v") #'exwm-floating-toggle-floating)
+    ;; (exwm-input-set-key (kbd "s-<down-mouse-1>") #'exwm-input-move-event)
+    (exwm-input-set-key (kbd "s-e") #'mu4e)
+    (exwm-input-set-key (kbd "s-o") #'ace-link)
+
+    ;; TODO possibly have N for journal entries and another n for somekind of popup/dropdown notetaking
+    (exwm-input-set-key (kbd "s-<f1>") #'helm-info)
+    (exwm-input-set-key (kbd "s-<f4>") #'wttrin)
+    (exwm-input-set-key (kbd "s-<f6>") #'transmission)
+    (exwm-input-set-key (kbd "s-<f8>") #'scrot)
+    (exwm-input-set-key (kbd "s-m") #'launch-mpsyt)
+    ;; (push ?\s- exwm-input-prefix-keys)
+    (define-key exwm-mode-map (kbd "s-v") #'exwm-floating-toggle-floating)
+
+    ;; (exwm-input-set-key (kbd "s-:") 'helm-M-x)
+    ;; (exwm-input-set-key (kbd "s-;") 'evil-ex)
+    (exwm-input-set-key (kbd "s-g") 'bookmark-jump)
+    ;; Shell (not a real one for the moment)
+    ;; (exwm-input-set-key (kbd "C-'") #'spacemacs/default-pop-shell)
+    (exwm-input-set-key (kbd "s-d") #'dmenu)
+    (exwm-input-set-key (kbd "s-y") #'org-agenda)
+    (exwm-input-set-key (kbd "s-a") #'calc)
+    (exwm-input-set-key (kbd "s-x") #'xflock4)
+    (exwm-input-set-key (kbd "s-X") #'logout-menu)
+    ;; (exwm-input-set-key (kbd "s-I") #'launch-htop)
+    (exwm-input-set-key (kbd "s-r") #'launch-ranger)
+    (exwm-input-set-key (kbd "s-c") #'org-capture)
+    (global-set-key (kbd "s-w") 'launch-browser)
+    (exwm-input-set-key (kbd "s-\\") #'org-wiki-helm)
+
+    (defun exwm/helm-org-rifle-gtd ()
+      "A rifle for my gtd files"
+      (interactive)
+      (helm-org-rifle-files (list "~/org/personal.org"
+                                  "~/org/work.org"
+                                  "~/org/inbox.org"
+                                  "~/org/someday.org")))
+
+    (exwm-input-set-key (kbd "s-|") #'exwm/helm-org-rifle-gtd)
+    ;; Undo window configurations
+    (exwm-input-set-key (kbd "s-U") #'winner-undo)
+    (exwm-input-set-key (kbd "s-u") #'+eshell/toggle)
+    (exwm-input-set-key (kbd "s-R") #'winner-redo)
+    ;; Change buffers
+    ;; (exwm-input-set-key (kbd "s-<space>") #'helm-M-x)
+    (exwm-input-set-key (kbd "s-b") #'helm-mini) ;; try excluding EXWM buffers
+    (exwm-input-set-key (kbd "s-B") #'helm-exwm)
+    ;; Focusing windows
+    (exwm-input-set-key (kbd "s-h") #'evil-window-left)
+    (exwm-input-set-key (kbd "s-j") #'evil-window-down)
+    (exwm-input-set-key (kbd "s-k") #'evil-window-up)
+    (exwm-input-set-key (kbd "s-l") #'evil-window-right)
+    (exwm-input-set-key (kbd "s-\/") #'split-window-below)
+    (exwm-input-set-key (kbd "s-<return>") #'split-window-right)
+    ;; Moving Windows
+    (exwm-input-set-key (kbd "s-H") #'evil-window-move-far-left)
+    (exwm-input-set-key (kbd "s-J") #'evil-window-move-very-bottom)
+    (exwm-input-set-key (kbd "s-K") #'evil-window-move-very-top)
+    (exwm-input-set-key (kbd "s-L") #'evil-window-move-far-right)
+    ;; Resize
+    (exwm-input-set-key (kbd "s-Y") #'enlarge-window-horizontally)
+    (exwm-input-set-key (kbd "s-U") #'shrink-window)
+    (exwm-input-set-key (kbd "s-I") #'enlarge-window)
+    (exwm-input-set-key (kbd "s-O") #'shrink-window-horizontally)
+    (exwm-input-set-key (kbd "s-f") #'doom/window-maximize-buffer)
+    ;; Workspaces
+    (exwm-input-set-key (kbd "s-]") #'next-buffer)
+    (exwm-input-set-key (kbd "s-[") #'previous-buffer)
+
+    (exwm-input-set-key (kbd "s-'") #'helm-bookmarks)
+    (exwm-input-set-key (kbd "s-i") #'exwm-edit--compose)
+    (exwm-input-set-key (kbd "s--") #'pulseaudio-control-decrease-volume)
+    (exwm-input-set-key (kbd "s-=") #'pulseaudio-control-increase-volume)
+    ;; (exwm-input-set-key (kbd "s--") #'amixer-down)
+    ;; (exwm-input-set-key (kbd "s-=") #'amixer-up)
+    (exwm-input-set-key (kbd "s-0") #'pulseaudio-control-toggle-current-sink-mute)
+    ;; (exwm-input-set-key (kbd "s-0") #'pulseaudio-control-toggle-current-sink-mute)
+
+(use-package! exwm-randr)
+(setq exwm-randr-workspace-output-plist '(0 "HDMI1" 1 "DP2"))
+
+(add-hook 'exwm-randr-screen-change-hook
+          (lambda ()
+            (start-process-shell-command
+             ;; "xrandr" nil "xrandr --output HDMI1 --primary --mode 1920x1080_60.00 --pos 900x0 --rotate normal")))
+             "xrandr" nil "xrandr --output HDMI1 --primary --mode 1920x1080 --rotate normal --output DP2 --left-of HDMI1 --mode 1440x900 --rotate left")))
+(exwm-randr-enable)
+
+;; (define-ibuffer-column exwm-class (:name "Class")
+;;   (if (bound-and-true-p exwm-class-name)
+;;       exwm-class-name
+;;     ""))
+;; (define-ibuffer-column exwm-instance (:name "Instance")
+;;   (if (bound-and-true-p exwm-instance-name)
+;;       exwm-instance-name
+;;     ""))
+;; (define-ibuffer-column exwm-urgent (:name "U")
+;;   (if (bound-and-true-p exwm--hints-urgency)
+;;       "U"
+;;     " "))
+
+;; (defun jethro/exwm-ibuffer (&optional other-window)
+;;   (interactive "P")
+;;   (let ((name (buffer-name)))
+;;     (ibuffer other-window
+;;              "*exwm-ibuffer*"
+;;              '((mode . exwm-mode))
+;;              nil nil nil
+;;              '((mark exwm-urgent
+;;                      " "
+;;                      (name 64 64 :left :elide)
+;;                      " "
+;;                      (exwm-class 20 -1 :left)
+;;                      " "
+;;                      (exwm-instance 10 -1 :left))))
+;;     (ignore-errors (ibuffer-jump-to-buffer name))))
+
+
+;; (define-key exwm-mode-map (kbd "C-x 4 0")
+;;   (lambda ()
+;;     (interactive)
+;;     (kill-buffer)
+;;     (delete-window)))
+
+;; (add-hook 'exwm-manage-finish-hook
+;;           (defun my-exwm-urxvt-simulation-keys ()
+;;             (when exwm-class-name
+;;               (cond
+;;                ((string= exwm-class-name "Firefox")
+;;                 (exwm-input-set-local-simulation-keys
+;;                  `(,@exwm-input-simulation-keys
+;;                    ([?\C-w] . [?\C-w]))))))))
+
+;; (when (file-exists-p "/home/jethro/.screenlayout/desktop.sh")
+;;   (require 'exwm-randr)
+;;   (setq exwm-randr-workspace-monitor-plist '(1 "USB-C-0" 2 "HDMI-0"))
+;;   (call-process "bash" nil 0 nil "-c" "/home/jethro/.screenlayout/desktop.sh")
+;;   (exwm-randr-enable))
+
+
+;; testing
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package! cl-lib)
+;; Apparently essentional functions taken from funcs.el spacemacsOS layer
+
+;; Can be used to bind a key to jumping to an application, or alternatively starting it.  E.g.:
+;;
+;; (exwm/bind-switch-to-or-run-command "s-f" "Firefox" "firefox")
+;;
+;; The window class can be found out with exwm's builtin info functions, but for most applications
+;; it should just match the buffer name.
+(defun exwm/bind-switch-to-or-run-command (key window-class command)
+  (exwm-input-set-key (kbd key)
+                      `(lambda ()
+                         (interactive)
+                         (exwm/switch-to-buffer-or-run ,window-class ,command))))
+
+;; (defun exwm//switch-to-line-mode ()
+;;   "Used as a hook to switch to line mode when transient mode starts."
+;;   (when (eq exwm--input-mode 'char-mode)
+;;     ;; (setq exwm--switch-to-char-after-transient (current-buffer))
+;;     (call-interactively 'exwm-input-grab-keyboard)))
+
+(defun exwm//persp-mode-inhibit-p (frame)
+  (frame-parameter frame 'unsplittable))
+
+(defun exwm/bind-command (key command &rest bindings)
+  (while key
+    (exwm-input-set-key (kbd key)
+                        `(lambda ()
+                           (interactive)
+                           (start-process-shell-command ,command nil ,command)))
+    (setq key     (pop bindings)
+          command (pop bindings))))
+
+;; Simulate insert state by using line mode without passthrough
+(defun exwm/enter-insert-state ()
+  (interactive)
+  (setq exwm-input-line-mode-passthrough nil)
+  (evil-insert-state))
+
+;; Simulate normal state by using line mode with passthrough, i.e. forward all commands to emacs
+(defun exwm/enter-normal-state ()
+  (interactive)
+  (setq exwm-input-line-mode-passthrough t)
+  (evil-normal-state))
+
+(defun exwm/escape ()
+  "Switch to normal state, and cancel possible fullscreen layout."
+  (interactive)
+  (exwm/enter-normal-state)
+  (exwm-layout-unset-fullscreen))
+
+(defun exwm/switch-to-buffer-or-run (window-class command)
+  "Switch to first buffer with window-class, and if not present, run command."
+  (let ((buffer
+         (cl-find window-class (buffer-list) :key (lambda(b) (cdr (assoc 'exwm-class-name (buffer-local-variables b)))) :test 'string-equal)))
+    (if buffer
+        (exwm-workspace-switch-to-buffer buffer)
+      (start-process-shell-command command nil command))))
+
+;; All buffers created in EXWM mode are named "*EXWM*". You may want to change
+;; it in `exwm-update-class-hook' and `exwm-update-title-hook', which are run
+;; when a new window class name or title is available. Here's some advice on
+;; this subject:
+;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
+;; + Only renaming buffer in one hook and avoid it in the other. There's no
+;;   guarantee on the order in which they are run.
+;; + For applications with multiple windows (e.g. GIMP), the class names of all
+;;   windows are probably the same. Using window titles for them makes more
+;;   sense.
+;; + Some application change its title frequently (e.g. browser, terminal).
+;;   Its class name may be more suitable for such case.
+;; In the following example, we use class names for all windows expect for
+;; Java applications and GIMP.
+
+;; testing funcs
+(defun exwm/jump-to-last-exwm ()
+  (interactive)
+  (exwm-workspace-switch exwm-toggle-workspace))
+
+(defun exwm/exwm-buffers-info ()
+  "Helper, return information about open exwm windows"
+  (cl-loop for buffer in (buffer-list)
+        for name = (buffer-name buffer)
+        for ecname = (buffer-local-value 'exwm-class-name buffer)
+        when ecname
+        collect (list :buffer-name name :exwm-class-name ecname)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(use-package! exwm-systemtray
+  :after exwm
+  :config
+(setq exwm-systemtray-height 18))
+(display-battery-mode 1)
+(display-time-mode 1)
+
+(use-package! statusbar
+  :after exwm
+  :config
+  (setq statusbar-modeline-variables '(battery-mode-line-string display-time-string)))
+
+(use-package! exwm-edit
+     :after exwm
+     :config
+        (setq exwm-edit-split-below t)
+        (defun exwm/on-exwm-edit-compose ()
+          ;; (spacemacs/toggle-visual-line-navigation-on)
+          (funcall 'org-mode))
+        ;; include frame height restrictions here?
+        (add-hook 'exwm-edit-compose-hook 'exwm/on-exwm-edit-compose))
+
+(exwm-enable)
+
+)
