@@ -110,10 +110,10 @@
 
 !/.Xdefaults
 
-!/.themes
-!/.themes/*
-!/.themes/Ant-Dracula-master/*
-!/.themes/Ant-Dracula-master/*/*
+# !/.themes
+# !/.themes/*
+# !/.themes/Ant-Dracula-master/*
+# !/.themes/Ant-Dracula-master/*/*
 # !/.themes/*/*
 
 !/.scripts
